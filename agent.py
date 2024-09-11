@@ -48,7 +48,7 @@ def get_insurance_policies_data(query: str):
     df_apolices = pd.read_parquet("./data/psr2016a2021_tratado.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
 
-    prefix = f"""Aqui estão os valores possíveis para a coluna "cultura" em formato de lista: {df_apolices.cultura.unique()}\nE aqui estão os valores possíveis para a coluna "evento_preponderante" (que representa o desastre climático que causou o sinistro) em formato de lista: {df_apolices.evento_preponderante.unique()}\nLembre-se que o evento_preponderante "-" significa que não houve sinistro na apólice, ignore tal valor quando for relevante.\n        Lembre que o índice de sinistralidade é "premio_liq" dividido por  "valor_indenizacao"\nLembre que taxa do prêmio é "premio_liq" dividido pelo "limite_garantia".
+    prefix = f"""Aqui estão os valores possíveis para a coluna "cultura" em formato de lista: {df_apolices.cultura.unique()}\nE aqui estão os valores possíveis para a coluna "evento_preponderante" (que representa o desastre climático que causou o sinistro) em formato de lista: {df_apolices.evento_preponderante.unique()}\nLembre-se que o evento_preponderante "-" significa que não houve sinistro na apólice, ignore tal valor quando for relevante.\nComo um especialista em seguro rural você conhece todos os termos relevantes como índice de sinistralidade, taxa do prêmio, importância segurada, entre outros.
     """
 
     pandas_agent = create_pandas_dataframe_agent(

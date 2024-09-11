@@ -23,14 +23,15 @@ def generate_stream_from_response(response):
         yield letter
 
 def get_response(user_input):
-    agent = instantiate_agent()
-
     system_prompt = """Como um especialista em seguro rural e avaliação de riscos climáticos no Brasil, sua função é fornecer informações precisas sobre a ocorrência de desastres, sinistros por eventos climáticos e boletins climáticos do INMET para vários municípios, estados e regiões em todo o país.\n\nResponda exclusivamente aos tópicos mencionados anteriormente. Se não souber a resposta, responda gentilmente que não consegue ou não pode responder a pergunta."""
 
     return agent.invoke({"messages": [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_input)
     ]}, config=st.session_state.agent_memory)
+
+
+agent = instantiate_agent()
 
 
 # UI
