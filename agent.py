@@ -111,6 +111,3 @@ agent = create_react_agent(
     tools=tools,
     checkpointer=memory
 )
-
-response = agent.invoke({'messages': ('user', 'Qual o número de ocorrências de estiagem no Paraná em 2021 e o número de apólices com sinistro relacionado?')}, config={'configurable': {'thread_id': 'test2'}})
-print(response['messages'][-1].content)
