@@ -7,21 +7,22 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentType
 from langchain.tools import tool
-from dotenv import load_dotenv
+import streamlit as st
 import pandas as pd
 
-pd.set_option('display.max_columns', None)
-load_dotenv()
+
+OPENAI_API_KEY=st.secrets['OPENAI_API_KEY']
 
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-memory = MemorySaver()  # Agent Memory Checkpointer
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
+embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
+memory = MemorySaver()
 
-vectorstore = PineconeVectorStore.from_existing_index('irc-chatbot', embedding=OpenAIEmbeddings())
+vectorstore = PineconeVectorStore.from_existing_index('irc-chatbot', embedding=embeddings)
 
 retriever = vectorstore.as_retriever(
     search_type='mmr',
-    search_kwargs={'k': 5, 'fetch_k': 20, 'lambda_mult': 0.7}
+    search_kwargs={'k': 5, 'fetch_k': 20, 'lambda_mult': 0.8}
 )
 
 
