@@ -30,7 +30,7 @@ retriever = vectorstore.as_retriever(
 @tool
 def get_current_date():
     """"
-        Use this tool to respond to questions related to time. 
+        Use this tool every time there is a word or number related to time or date in the question. For example, sentences that contain phrases like "last two years", "today", "next semester".
         Returns the current date in YYYY-mm-dd format.
     """
     import datetime
