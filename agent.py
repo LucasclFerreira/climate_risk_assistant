@@ -26,7 +26,7 @@ def get_insurance_policies_data(query: str):
     Keyword arguments:
     query -- user's question to be answered by the pandas dataframe agent
     """
-    df_apolices = pd.read_parquet("./data/psr2016a2021_tratado.parquet")
+    df_apolices = pd.read_parquet("./data/psr_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
 
     prefix = f"""
@@ -38,7 +38,9 @@ def get_insurance_policies_data(query: str):
         
         <evento_preoponderante>{df_apolices.evento_preponderante.unique()}</evento_preponderante>
 
-        Lembre-se que o evento_preponderante "-" significa que não houve sinistro na apólice. Logo, leve em consideração essas apólices ao calcular a sinistralidade, mas ignore-as quando for determinar o evento climático mais frequente.
+        Lembre-se que o se o "evento_preponderante" for "-", significa que não houve sinistro na apólice, ou seja, não ocorreu nenhum evento climático
+        
+        Nunca esqueça que o cálculo da sinistralidade (índice de sinistralidade) deve incluir qualquer valor da coluna "evento_preponderante", incluindo apólices em que o valor é "-".
 
         Como um especialista em seguro rural você conhece todos os termos relevantes como índice de sinistralidade, taxa do prêmio, importância segurada, entre outros.
 
@@ -66,7 +68,7 @@ def get_natural_disasters_data(query: str):
     Keyword arguments:
     query -- user's question to be answered by the pandas dataframe agent
     """
-    df_desastres = pd.read_csv("./data/desastres_brasil.csv")
+    df_desastres = pd.read_parquet("./data/desastres_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
 
     prefix = f"""
