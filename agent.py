@@ -10,6 +10,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentType
 from langchain.tools import tool
+from datetime import datetime
 import streamlit as st
 import pandas as pd
 
@@ -28,11 +29,16 @@ def get_insurance_policies_data(query: str):
     """
     df_apolices = pd.read_parquet("./data/psr_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
+    now = datetime.now()
 
     prefix = f"""
+        O dataframe possui dados desde 2006 até 2023. Não se esqueça que estamos no mês {now.strftime("%m")} do ano de {now.strftime("%Y")}.
+
         Aqui estão os valores possíveis para a coluna "cultura" em formato de lista:
 
         <cultura>{df_apolices.cultura.unique()}</cultura>
+
+        Lembre-se que é importante separar a 1ª e 2ª safra do milho.
 
         E aqui estão os valores possíveis para a coluna "evento_preponderante" (que representa o desastre climático que causou o sinistro) em formato de lista: 
         
@@ -45,6 +51,10 @@ def get_insurance_policies_data(query: str):
         Como um especialista em seguro rural você conhece todos os termos relevantes como índice de sinistralidade, taxa do prêmio, importância segurada, entre outros.
 
         Não responda com exemplos, mas com informações estatísticas.
+
+        
+
+        Sempre indique que a resposta tem como base dados do Programa de Subscriação do Seguro Rural (PSR) e exiba o link de acesso: https://dados.agricultura.gov.br/dataset/sisser3
     """
 
     pandas_agent = create_pandas_dataframe_agent(
@@ -70,8 +80,11 @@ def get_natural_disasters_data(query: str):
     """
     df_desastres = pd.read_parquet("./data/desastres_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
+    now = datetime.now()
 
     prefix = f"""
+        O dataframe possui dados desde 1991 até 2023. Não se esqueça que estamos no mês {now.strftime("%m")} do ano de {now.strftime("%Y")}.
+
         Aqui estão os valores possíveis para a coluna "grupo_de_desastre" em formato de lista:
 
         <grupo_de_desastre>{df_desastres.grupo_de_desastre.unique()}</grupo_de_desastre>
@@ -81,6 +94,10 @@ def get_natural_disasters_data(query: str):
         <desastre>{df_desastres.desastre.unique()}</desastre>
 
         Não responda com exemplos, mas com informações estatísticas.
+
+        Sempre que não for indicado um ano específico na pergunta, utilize a biblioteca datetime do python.
+
+        Sempre indique que a resposta obtida tem como base os dados do Atlas de Desastres no Brasil e exiba o link de acesso: https://atlasdigital.mdr.gov.br/paginas/downloads.xhtml)
     """
 
     pandas_agent = create_pandas_dataframe_agent(
@@ -122,7 +139,7 @@ class State(MessagesState):
 
 # Nodes
 def reasoner(state: State):
-    system_prompt = 'You are a helpful climate assistant tasked with answering the user input by generating insights based on the information retrieved from climate reports, disaster and insurance database. '
+    system_prompt = 'You are a helpful climate assistant tasked with answering the user input by generating insights based on the information retrieved from climate reports, disaster and insurance database.'
     return {'messages': [llm_with_tools.invoke([SystemMessage(content=system_prompt)] + state['messages'])]}
 
 tool_node = ToolNode(tools)
