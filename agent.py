@@ -28,7 +28,7 @@ def get_insurance_policies_data(query: str):
     query -- user's question to be answered by the pandas dataframe agent
     """
     df_apolices = pd.read_parquet("./data/psr_LLM.parquet")
-    llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
+    llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
     now = datetime.now()
 
     prefix = f"""
@@ -79,7 +79,7 @@ def get_natural_disasters_data(query: str):
     query -- user's question to be answered by the pandas dataframe agent
     """
     df_desastres = pd.read_parquet("./data/desastres_LLM.parquet")
-    llm = ChatOpenAI(model='gpt-4o-mini', temperature=0.01)
+    llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
     now = datetime.now()
 
     prefix = f"""
