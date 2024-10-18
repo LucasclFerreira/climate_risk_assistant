@@ -10,13 +10,16 @@ from typing_extensions import TypedDict, Annotated
 from langgraph.graph.message import add_messages
 from langchain.schema import Document
 from typing import List
+import streamlit as st
 
 from llms.retrieval_grader import retrieval_grader
 from llms.rag_generation import rag_chain
 
 
+PINECONE_HOST = st.secrets["PINECONE_HOST"]
+
 pc = Pinecone()
-index = pc.Index(host='https://irc-rag-k8glgvm.svc.aped-4627-b74a.pinecone.io')
+index = pc.Index(host=PINECONE_HOST)
 
 
 def format_docs(docs) -> str:
