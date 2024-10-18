@@ -1,18 +1,16 @@
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-from langgraph.graph import StateGraph, MessagesState, START, END
-from langchain_pinecone.vectorstores import PineconeVectorStore
-from langchain.tools.retriever import create_retriever_tool
+from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import SystemMessage
-from langgraph.prebuilt import create_react_agent
-from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentType
 from langchain.tools import tool
 from datetime import datetime
 import streamlit as st
 import pandas as pd
+
+from rag import create_workflow
 
 
 OPENAI_API_KEY=st.secrets['OPENAI_API_KEY']
@@ -51,10 +49,6 @@ def get_insurance_policies_data(query: str):
         Como um especialista em seguro rural você conhece todos os termos relevantes como índice de sinistralidade, taxa do prêmio, importância segurada, entre outros.
 
         Não responda com exemplos, mas com informações estatísticas.
-
-        
-
-        Sempre indique que a resposta tem como base dados do Programa de Subscriação do Seguro Rural (PSR) e exiba o link de acesso: https://dados.agricultura.gov.br/dataset/sisser3
     """
 
     pandas_agent = create_pandas_dataframe_agent(
@@ -96,8 +90,6 @@ def get_natural_disasters_data(query: str):
         Não responda com exemplos, mas com informações estatísticas.
 
         Sempre que não for indicado um ano específico na pergunta, utilize a biblioteca datetime do python.
-
-        Sempre indique que a resposta obtida tem como base os dados do Atlas de Desastres no Brasil e exiba o link de acesso: https://atlasdigital.mdr.gov.br/paginas/downloads.xhtml)
     """
 
     pandas_agent = create_pandas_dataframe_agent(
@@ -113,23 +105,26 @@ def get_natural_disasters_data(query: str):
 
     return response
 
-embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
-vectorstore = PineconeVectorStore.from_existing_index('irc-chatbot', embedding=embeddings)
 
-retriever = vectorstore.as_retriever(
-    search_type='mmr',
-    search_kwargs={'k': 5, 'fetch_k': 20, 'lambda_mult': 0.8}
-)
+retrieval_agent = create_workflow()
+@tool
+def retrieve_climate_report_documents(query: str):
+    """
+    Use this tool to retrieve relevant documents to answer the user's question
 
-retrieve_climate_report_documents = create_retriever_tool(
-    retriever=retriever,
-    name='inmet_docs_retriever',
-    description='Procura e retorna trechos relevantes dos Boletins Agroclimatológicos do Instituto Nacional de Meteorologia (INMET)',
-)
+    Keyword arguments:
+    query -- user's question to be answered
+    """
 
-tools = [retrieve_climate_report_documents, get_insurance_policies_data, get_natural_disasters_data]
+    inputs = {"question": query, "iteration": 0}
+
+    response = retrieval_agent.pick('generation').invoke(inputs, {"recursion_limit": 5})
+    return response
+
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.01, api_key=OPENAI_API_KEY)
+
+tools = [retrieve_climate_report_documents, get_insurance_policies_data, get_natural_disasters_data]
 llm_with_tools = llm.bind_tools(tools)
 
 
@@ -139,21 +134,34 @@ class State(MessagesState):
 
 # Nodes
 def reasoner(state: State):
-    system_prompt = 'You are a helpful climate assistant tasked with answering the user input by generating insights based on the information retrieved from climate reports, disaster and insurance database.'
+    system_prompt = """
+    You are a helpful climate assistant tasked with answering the user input by generating insights based on the information retrieved from climate reports and databases.
+
+    You can not answer questions out of the topics: climate, weather, and insurance.
+    
+    Use five sentences maximum and keep the answer concise. 
+
+    When using retrieved information, cite all the sources used with the title and page of the documents used in the answer. 
+
+    Everytime you use a tool to get data (about insurance or natural disasters), retrieve climate report documents to complement the answer.
+    """
     return {'messages': [llm_with_tools.invoke([SystemMessage(content=system_prompt)] + state['messages'])]}
 
 tool_node = ToolNode(tools)
 
 # Graph
-workflow = StateGraph(State)
-workflow.add_node('reasoner', reasoner)
-workflow.add_node('tools', tool_node)
 
-# Edges
-workflow.add_edge(START, 'reasoner')
-workflow.add_conditional_edges('reasoner', tools_condition)
-workflow.add_edge('tools', 'reasoner')
+def create_workflow():
+    workflow = StateGraph(State)
+    workflow.add_node('reasoner', reasoner)
+    workflow.add_node('tools', tool_node)
 
-# Agent
-memory = MemorySaver()
-agent = workflow.compile(checkpointer=memory)
+    # Edges
+    workflow.add_edge(START, 'reasoner')
+    workflow.add_conditional_edges('reasoner', tools_condition)
+    workflow.add_edge('tools', 'reasoner')
+
+    # Agent
+    memory = MemorySaver()
+    agent = workflow.compile(checkpointer=memory)
+    return agent
