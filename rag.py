@@ -14,8 +14,6 @@ from typing import List
 from llms.retrieval_grader import retrieval_grader
 from llms.rag_generation import rag_chain
 
-import streamlit as st
-# PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
 
 pc = Pinecone()
 index = pc.Index(host='https://irc-rag-k8glgvm.svc.aped-4627-b74a.pinecone.io')
