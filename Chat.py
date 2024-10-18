@@ -6,7 +6,17 @@ import streamlit as st
 
 # Session State
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = [{"role": "ai", "content": "Olá! Eu sou o **IRC Climate Risk Assistant**. Como posso te ajudar?"}]
+    initial_message = """
+    Olá! Eu sou o **IRC Climate Risk Assistant**, seu assistente especializado em riscos climáticos e seu impacto no seguro rural.
+
+    Você pode perguntar, por exemplo:
+    > *Qual o desastre climático mais comum em Minas Gerais?*\n
+    > *Qual a sinistralidade para soja no Paraná nesses útlimos três anos?*\n
+    > *Qual é o impacto do La Niña na agricultura e qual a chance desse fenômeno em 2025?*
+    
+    Estou pronto para te ajudar! **O que você gostaria de saber hoje?**
+    """
+    st.session_state.chat_history = [{"role": "ai", "content": initial_message}]
 
 if "agent_memory" not in st.session_state:
     st.session_state.agent_memory = {"configurable": {"thread_id": "124940"}}
