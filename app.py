@@ -40,7 +40,7 @@ agent = instantiate_agent()
 
 
 # UI
-st.logo('./img/irbped_logo.png')
+# st.logo('./img/irbped_logo.png')
 
 st.title("IRC Climate Risk Assistant 🌿🌦️")
 
