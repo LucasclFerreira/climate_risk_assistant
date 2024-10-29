@@ -1,13 +1,9 @@
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_pinecone.vectorstores import PineconeVectorStore
-from langchain_core.output_parsers import StrOutputParser
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.runnables import RunnableParallel
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, StateGraph, END
 from pinecone.grpc import PineconeGRPC as Pinecone
-from typing_extensions import TypedDict, Annotated
-from langgraph.graph.message import add_messages
+from typing_extensions import TypedDict
 from langchain.schema import Document
 from typing import List
 import streamlit as st
@@ -34,16 +30,12 @@ class GraphState(TypedDict):
 
     Attributes:
         question: question
-        iteration: number of rewrite-retrieve iterations
         generation: LLM generation
-        rewrite_question: whether the question should be re-written
         documents: list of documents
     """
 
     question: str
-    iteration: str
     generation: str
-    rewrite_question: str
     documents: List[Document]
 
 # Nodes
