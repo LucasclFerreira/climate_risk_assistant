@@ -116,7 +116,7 @@ def retrieve_climate_report_documents(query: str):
     query -- user's question to be answered
     """
 
-    inputs = {"question": query, "iteration": 0}
+    inputs = {"question": query}
 
     response = retrieval_agent.pick('generation').invoke(inputs, {"recursion_limit": 5})
     return response
