@@ -9,6 +9,10 @@ from langchain.tools import tool
 from datetime import datetime
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+
 
 from rag import create_workflow
 
@@ -25,6 +29,8 @@ def get_insurance_policies_data(query: str):
     Keyword arguments:
     query -- user's question to be answered by the pandas dataframe agent
     """
+    print('[LOG]: tool get_insurance_policies_data invoked')
+    
     df_apolices = pd.read_parquet("./data/psr_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
     now = datetime.now()
@@ -65,6 +71,48 @@ def get_insurance_policies_data(query: str):
     return response
 
 @tool
+def generate_plot_code(query: str):
+    """
+    Gera código Python para criar gráficos com base na solicitação do usuário.
+    Keyword arguments:
+    query -- descrição simples do gráfico desejado pelo usuário.
+    """
+
+    df_apolices = pd.read_parquet("./data/psr_LLM.parquet")
+    df_desastres = pd.read_parquet("./data/desastres_LLM.parquet")
+    
+    llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
+    
+    prefix = f"""
+        Você é um especialista em análise de dados e geração de gráficos com Plotly e Matplotlib.
+        Seu objetivo é gerar código Python eficiente para criar visualizações com base na solicitação do usuário.
+        Aqui estão os dataframes disponíveis:
+        - df_apolices (apólices de seguro rural, de 2006 a 2023)
+        - df_desastres (desastres naturais, de 1991 a 2023)
+        
+        Regras:
+        1. Sempre use Plotly para criar gráficos interativos.
+        2. Use `fig.show()` ao final do código para exibir o gráfico.
+        3. Interprete a consulta do usuário e escolha automaticamente o tipo de gráfico mais adequado.
+        4. Não peça ao usuário para especificar detalhes técnicos; deduza-os automaticamente.
+        5. Se a consulta for ambígua, escolha um tipo de gráfico padrão (ex.: barras, linhas).
+    """
+    
+    pandas_agent = create_pandas_dataframe_agent(
+        llm=llm,
+        df={"df_apolices": df_apolices, "df_desastres": df_desastres},
+        prefix=prefix,
+        allow_dangerous_code=True,
+        agent_type=AgentType.OPENAI_FUNCTIONS,
+        verbose=True
+    )
+    
+    code = pandas_agent.pick('output').invoke(f"Crie um gráfico interativo com base na seguinte descrição: {query}.")
+    
+    return code
+
+
+@tool
 def get_natural_disasters_data(query: str): 
     """
     Use this tool to query data from natural disasters and extreme weather events
@@ -72,6 +120,7 @@ def get_natural_disasters_data(query: str):
     Keyword arguments:
     query -- user's question to be answered by the pandas dataframe agent
     """
+    print('[LOG]: tool get_natural_disasters_data invoked')
     df_desastres = pd.read_parquet("./data/desastres_LLM.parquet")
     llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)
     now = datetime.now()
@@ -124,7 +173,7 @@ def retrieve_climate_report_documents(query: str):
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.01, api_key=OPENAI_API_KEY)
 
-tools = [retrieve_climate_report_documents, get_insurance_policies_data, get_natural_disasters_data]
+tools = [retrieve_climate_report_documents, get_insurance_policies_data, get_natural_disasters_data, generate_plot_code]
 llm_with_tools = llm.bind_tools(tools)
 
 
