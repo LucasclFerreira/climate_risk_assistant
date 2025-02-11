@@ -2,6 +2,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from agent import create_workflow
 from time import sleep
 import streamlit as st
+import re
 
 
 # Session State
@@ -58,9 +59,28 @@ if user_input := st.chat_input("Faça um pergunta..."):
         st.markdown(user_input)
     st.session_state.chat_history.append({"role": "user", "content": user_input})
 
+    pre_prompt = """Caso o usuario peça para gerar um grafico gere código python para plotar um grafico interativo no streamlit usando 
+ploty sobre a query do usuario, gere apenas o codigo, e faça uma analise abaixo sobre o grafico. Query do Usuário: {query}"""
+
     # AI Response
     with st.chat_message("ai"):
         with st.spinner("Pensando..."):
-            response = get_response(user_input)['messages'][-1].content
-        st.write_stream(generate_stream_from_response(response))
+            response = get_response(pre_prompt.format(query=user_input) )['messages'][-1].content
+
+            pattern = r"(.*?)```python\n(.*?)\n```(.*)"
+            match = re.match(pattern, response, re.DOTALL)
+
+            if match:
+                text_before = match.group(1).strip()
+                python_code = match.group(2).strip()
+                text_after = match.group(3).strip()
+
+                print('[LOG]: SCRIPT GERADO:')
+                print(python_code)
+
+                exec(python_code)
+                st.write_stream(generate_stream_from_response(text_after))
+
+            else:
+                st.write_stream(generate_stream_from_response(response))
     st.session_state.chat_history.append({"role": "ai", "content": response})
