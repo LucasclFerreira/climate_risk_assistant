@@ -8,7 +8,7 @@ from langchain.schema import Document
 from typing import List
 import streamlit as st
 
-from llms.retrieval_grader import retrieval_grader
+from llms.retrieval_grader import create_retrieval_grader
 from llms.rag_generation import rag_chain
 
 
@@ -104,7 +104,7 @@ def grade_documents(state):
 
     filtered_docs = []
     for doc in documents:
-        score = retrieval_grader.invoke(
+        score = create_retrieval_grader().invoke(
             {"question": question, "document": doc.page_content}
         )
         grade = score.binary_score
